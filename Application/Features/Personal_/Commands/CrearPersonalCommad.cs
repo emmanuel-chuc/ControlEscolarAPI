@@ -1,8 +1,13 @@
 ﻿using Application.DTOs;
+using Application.Exceptions;
 using Application.Interfaces;
 using Application.Responses;
+using Application.Utils;
 using AutoMapper;
+using Domain.Entities;
+using Domain.Settings;
 using MediatR;
+using Microsoft.Extensions.Options;
 
 
 namespace Application.Features.Personal.Commands
@@ -21,16 +26,27 @@ namespace Application.Features.Personal.Commands
     public class CreatePersonalCommandHandler : IRequestHandler<CrearPersonalCommad, ApiResponse<string>>
     {
         private IRepositorioPersonal _repositorioPersonal;
+        private readonly ConnectionStringsSettings _connectionStrings;
+        private IRepositorio<TipoPersonal> _repositorioTipoPersonal;
 
-        public CreatePersonalCommandHandler(IRepositorioPersonal repositorioPersonal)
+        public CreatePersonalCommandHandler(IRepositorioPersonal repositorioPersonal, IOptions<ConnectionStringsSettings> connectionStrings, IRepositorio<TipoPersonal> repositorioTipoPersonal)
         {
             _repositorioPersonal = repositorioPersonal;
+            _connectionStrings = connectionStrings.Value;
+            _repositorioTipoPersonal = repositorioTipoPersonal;
         }
+        
 
         public async Task<ApiResponse<string>> Handle(CrearPersonalCommad request, CancellationToken cancellationToken)
         {
+            TipoPersonal? tipoPersonal = await _repositorioTipoPersonal.ObtenerPorId(request.TipoPersonalId);
+
+            if (tipoPersonal == null)
+            {
+                throw new ApiException("No se encontró registro para actualizar");
+            }
             //Se crea un nuevo numero de control con el procedimiento almacenado
-            string numControl = "";
+            string? numControl = await GeneraNumeroControl.GeneraNumeroControlPersonal(tipoPersonal.TipoPersonalId.ToString(),_connectionStrings.DefaultConnection);
 
             //Se crea un nuevo Objeto de Personal
             Domain.Entities.Personal nuevoRegPersonal = new Domain.Entities.Personal();

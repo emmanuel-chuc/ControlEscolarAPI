@@ -31,6 +31,7 @@ namespace Application.Features.Alumno_.Command
 
         public async Task<ApiResponse<string>> Handle(CrearAlumnoCommand request, CancellationToken cancellationToken)
         {
+            // Metodo para generar el Numero de Control del Alumno
             string? numControl = await GeneraNumeroControl.GeneraNumeroControlAlumno( _connectionStrings.DefaultConnection);
 
             Alumno alumno = new Alumno();
